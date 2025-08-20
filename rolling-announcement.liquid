@@ -1,0 +1,143 @@
+{% assign dir = section.settings.direction %}
+{% assign pause = section.settings.pause_on_hover %}
+{% assign ts = section.settings.text_style %}
+
+<section class="rolling-announcement"
+  style="
+    --bg: {{ section.settings.bg }};
+    --color: {{ section.settings.color }};
+    --gap: {{ section.settings.gap }}rem;
+    --speed: {{ section.settings.speed }}s;
+    --size: {{ section.settings.font_size }}px;
+    --pt: {{ section.settings.padding_top }}rem;
+    --pb: {{ section.settings.padding_bottom }}rem;
+  "
+  data-dir="{{ dir }}"
+  data-pause="{{ pause }}"
+  data-style="{{ ts }}"
+>
+  {% capture items %}
+    {% for block in section.blocks %}
+      {% assign bstyle = block.settings.prefix_style %}
+      {% if bstyle == blank or bstyle == 'inherit' %}
+        {% assign bstyle = ts %}
+      {% endif %}
+
+      {% assign prefix = '' %}
+      {% case bstyle %}
+        {% when 'bullet' %}{% assign prefix = '• ' %}
+        {% when 'dash' %}{% assign prefix = '– ' %}
+        {% when 'star' %}{% assign prefix = '★ ' %}
+        {% when 'arrow' %}{% assign prefix = '→ ' %}
+        {% when 'check' %}{% assign prefix = '✓ ' %}
+        {% when 'custom' %}
+          {% assign cp = block.settings.custom_prefix | strip %}
+          {% if cp != blank %}
+            {% assign prefix = cp | append: ' ' %}
+          {% else %}
+            {% assign prefix = '- ' %}
+          {% endif %}
+      {% endcase %}
+
+      {% if block.settings.url != blank %}
+        <a class="ra__item" href="{{ block.settings.url }}">{{ prefix }}{{ block.settings.text | escape }}</a>
+      {% else %}
+        <span class="ra__item">{{ prefix }}{{ block.settings.text | escape }}</span>
+      {% endif %}
+    {% endfor %}
+  {% endcapture %}
+
+  <div class="ra">
+    <div class="ra__group">{{ items }}</div>
+    <div class="ra__group" aria-hidden="true">{{ items }}</div>
+  </div>
+
+  <style>
+    .rolling-announcement{background:var(--bg);color:var(--color);padding-top:var(--pt);padding-bottom:var(--pb)}
+    .ra{display:flex;overflow:hidden;user-select:none}
+    .ra__group{display:flex;align-items:center;gap:var(--gap);flex:0 0 auto;min-width:100%;animation:ra-left var(--speed) linear infinite}
+    [data-dir="right"] .ra__group{animation-name:ra-right}
+    [data-pause="true"] .ra:hover .ra__group{animation-play-state:paused}
+    .ra__item{font-size:var(--size);line-height:1.2;white-space:nowrap;text-decoration:none;color:inherit}
+    @keyframes ra-left{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+    @keyframes ra-right{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+  </style>
+</section>
+
+{% schema %}
+{
+  "name": "Rolling announcement",
+  "settings": [
+    { "type": "color", "id": "bg", "label": "Background", "default": "#111111" },
+    { "type": "color", "id": "color", "label": "Text color", "default": "#ffffff" },
+    { "type": "range", "id": "font_size", "label": "Font size (px)", "min": 12, "max": 32, "step": 1, "default": 16 },
+    { "type": "range", "id": "gap", "label": "Gap between items (rem)", "min": 0, "max": 6, "step": 0.5, "default": 2 },
+    { "type": "range", "id": "speed", "label": "Scroll duration (seconds)", "min": 6, "max": 60, "step": 1, "default": 20 },
+    {
+      "type": "select",
+      "id": "direction",
+      "label": "Direction",
+      "default": "left",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "right", "label": "Right" }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "text_style",
+      "label": "Default text style",
+      "default": "none",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "bullet", "label": "Bullet (•)" },
+        { "value": "dash", "label": "Dash (–)" },
+        { "value": "star", "label": "Star (★)" },
+        { "value": "arrow", "label": "Arrow (→)" },
+        { "value": "check", "label": "Check (✓)" },
+        { "value": "custom", "label": "Custom (use block field)" }
+      ]
+    },
+    { "type": "checkbox", "id": "pause_on_hover", "label": "Pause on hover", "default": true },
+    { "type": "range", "id": "padding_top", "label": "Padding top (rem)", "min": 0, "max": 6, "step": 0.5, "default": 1 },
+    { "type": "range", "id": "padding_bottom", "label": "Padding bottom (rem)", "min": 0, "max": 6, "step": 0.5, "default": 1 }
+  ],
+  "blocks": [
+    {
+      "type": "item",
+      "name": "Message",
+      "settings": [
+        { "type": "text", "id": "text", "label": "Text", "default": "Free shipping on orders over $99" },
+        { "type": "url", "id": "url", "label": "Link (optional)" },
+        {
+          "type": "select",
+          "id": "prefix_style",
+          "label": "Text style (override)",
+          "default": "inherit",
+          "options": [
+            { "value": "inherit", "label": "Use section default" },
+            { "value": "none", "label": "None" },
+            { "value": "bullet", "label": "Bullet (•)" },
+            { "value": "dash", "label": "Dash (–)" },
+            { "value": "star", "label": "Star (★)" },
+            { "value": "arrow", "label": "Arrow (→)" },
+            { "value": "check", "label": "Check (✓)" },
+            { "value": "custom", "label": "Custom symbol" }
+          ]
+        },
+        { "type": "text", "id": "custom_prefix", "label": "Custom symbol (used when style = Custom)", "default": "-" }
+      ]
+    }
+  ],
+  "max_blocks": 10,
+  "presets": [
+    {
+      "name": "Rolling announcement",
+      "blocks": [
+        { "type": "item" },
+        { "type": "item" }
+      ]
+    }
+  ]
+}
+{% endschema %}
